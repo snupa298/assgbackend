@@ -8,15 +8,18 @@ const orderSchema = mongoose.Schema({
         required: true,
         ref: User,
     },
-    orderTotal: {
+    totalAmount: {
         type:Number
         // itemsCount: {type: Number, required: true},
         // cartSubtotal: {type: Number, required: true}
     },
     cartItems: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: Cart,
+        // type: mongoose.Schema.Types.ObjectId,
+        // required: true,
+        // ref: Cart,
+        type:Array,
+        required:true,
+        ref:Cart
     }
 }, {
     timestamps: true,

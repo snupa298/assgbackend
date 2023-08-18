@@ -1,6 +1,21 @@
 const Cart=require("../models/cartModel")
 const Order=require("../models/orderModel")
 const User=require("../models/userModel")
+const Product=require("../models/productModel")
+
+
+async function calculateCartTotal(cart) {
+  let totalAmount = 0;
+
+  for (const item of cart.items) {
+    const product = await Product.findById(item.productId);
+    if (product) {
+      totalAmount += product.price * item.quantity;
+    }
+  }
+
+  return totalAmount;
+}
 
 exports.createOrder = async (req,res) =>{
     try {
@@ -18,6 +33,9 @@ exports.createOrder = async (req,res) =>{
           return res.status(404).json({ message: 'Cart not found' });
         }
     
+ // Calculate the total amount
+ const totalAmount = await calculateCartTotal(cart);
+
         // Create a new order
         const order = new Order({
           user,
@@ -25,7 +43,8 @@ exports.createOrder = async (req,res) =>{
             productId: item.productId,
             quantity: item.quantity,
           })),
-          orderTotal: 0, // Calculate the total amount based on items in the real scenario
+         
+         totalAmount
         });
     
         // Save the order
@@ -40,4 +59,51 @@ exports.createOrder = async (req,res) =>{
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
       }
+}
+
+
+exports.myOrders = async (req, res) => {
+  try{
+    const orders = await Order.find({ user: req.user._id })
+    
+
+    res.status(200).json({
+        success: true,
+        orders
+    })
+  }
+  catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
+exports.getSingleOrder = async (req, res) => {
+  try{
+    const order = await Order.findById(req.params.id)
+
+    if (!order) {
+      res.status(404).json({ message: 'No order is found' });
+    }
+  
+    res.status(200).json({
+        success: true,
+        order
+    })
+  }
+  catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+exports.deleteOrder = async(req,res) =>{
+  try{
+const order = await Order.findById(req.params.id).orFail()
+
+await order.deleteOne()
+res.send("Order removed")
+  }
+  catch(err){
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
